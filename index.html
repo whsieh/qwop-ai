@@ -1,0 +1,144 @@
+<!-- These separate gallery/info pages should be extremely simple and content-focused! -->
+
+<html>
+
+<title>Wenson Hsieh - QWOP AI</title>
+<head>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Source+Sans+Pro">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <script type="text/javascript" src="js/lib/jquery-2.0.0.min.js"></script>
+    <script type="text/javascript" src="js/lib/Box2d-min.js"></script>
+    <script type="text/javascript" src="js/neuralnet-min.js"></script>
+    <style>
+    .content {
+        width: 60%;
+        text-align: justify;
+        font-family: "Source Sans Pro", sans-serif;
+        font-size: 25px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #title {
+        text-align: center;
+        font-size: 75px;
+        padding-top: 10px;
+        padding-bottom: 5px;
+    }
+
+    #subtitle {
+        text-align: center;
+        font-size: 40px;
+        padding-bottom: 15px;
+    }
+
+    .heading {
+        text-align: center;
+        font-size: 40px;
+        padding-top: 15px;
+    }
+
+    .caption {
+        text-align: justify;
+        font-family: "Source Sans Pro", sans-serif;
+        font-size: 20px;
+    }
+
+    .figure {
+        width: 50%;
+        left: 25%;
+        position: relative;
+        margin-top: 50px;
+        margin-bottom: 50px;
+    }
+
+    .youtube-embed {
+        width: 800px;
+        height: 480px;
+        left: calc(50% - 400px);
+        position: relative;
+        margin-top: 50px;
+        margin-bottom: 50px;
+    }
+
+    #controlPanel {
+        width: 320px;
+        height: 120px;
+        left: calc(50% - 160px);
+        position: relative;
+        margin-bottom: 50px;
+    }
+
+    button {
+        max-width: 150px;
+        margin-bottom: 10px;
+    }
+
+    canvas {
+        border-radius:15px;
+        border:15px solid #14140f;
+        width: 900px;
+        left: calc(50% - 450px);
+        position: relative;
+        margin-top: 25px;
+    }
+
+    input {
+        max-width: 100px;
+    }
+
+    #nn_chk {
+        margin-top: 10px;
+    }
+    </style>
+<body>
+    <h1 class="content" id="title">QWOP-AI</h1>
+    <h1 class="content" id="subtitle">Summer 2013</h1>
+    <p class="content">Fresh out of Introduction to Artificial Intelligence and interested in practicing my web development skills, I incorporated both into QWOP-AI, my first personal project of 2013. Inspired by <a href="http://www.foddy.net/Athletics.html">QWOP</a>, I created a walking game where the player must walk by controlling 4 ragdoll properties: thigh angle and knee angle for both left and right knees. These behaviors are controlled using 4 keys: Q, W, O and P. You can try the game out below, as well as the AI. Press Q to move the ragdoll's legs closer together and W to move them apart. O bends the left knee and straightens the right knee, and P bends the right knee while straightening the left. You can also press SPACE to reset the ragdoll.</p>
+    <!-- Whoa, I never realized how awful this was... -->
+    <canvas id="canvas"></canvas>
+    <div id="controlPanel" class="well">
+        <button class="btn btn-default" onclick="startAI()" id="startbtn">Start AI</button>
+        <button class="btn btn-default" onclick="stopAI()" id="stopbtn">Stop AI</button>
+        <button class="btn btn-default" onclick="resetRunner()" id="resetbtn">Reset Ragdoll</button>
+        <input class="content" id="nn_chk" name="nn_chk" type="checkbox" checked="checked"></input>
+        <label for="nn_chk">Use Neural Network</label>
+        <input class="content" id="qt_chk" name="qt_chk" type="checkbox" checked="checked"></input>
+        <label for="qt_chk">Use Q-Table</label>
+        <script type="text/javascript" src="js/game.js"></script>
+        <script type="text/javascript" src="js/walk-neural.js"></script>
+    </div>
+    <script>
+        $("#nn_chk").click( function() {
+            if ($("#nn_chk").is(":checked")) {
+                NN_WEIGHT = 10
+            } else {
+                NN_WEIGHT = 0
+            }
+        });
+        $("#qt_chk").click( function() {
+            if ($("#qt_chk").is(":checked")) {
+                QT_WEIGHT = 1
+            } else {
+                QT_WEIGHT = 0
+            }
+        });
+        $(window).keydown( function(event) {
+            event.preventDefault();
+        });
+    </script>
+
+    <p class="content">Originally, I implemented the naive version of Q-learning I learned in my AI class. Using various metrics to describe the state of the ragdoll, I set out to learn the optimal action given every possible state. I rewarded forward motion, penalized falling over, and ran the learner for around 8 hours at 10 states per second. Unfortunately, this didn't work as well as I had planned &mdash; my first attempt ended up converging on a (rather entertaining) local optimum, and was unable to actually learn to take steps.</p>
+    <iframe class="youtube-embed" src="http://www.youtube.com/embed/GQZDbkftIPU" frameborder="0" allowfullscreen></iframe>
+
+    <p class="content">To avoid this local optimum, I not only rewarded forward motion, but also gave a small amount of points for simply moving the ragdoll's legs back and forth. To help the algorithm converge faster, I also pushed knowledge of falling to earlier states by heavily penalizing unstable configurations (e.g. foot height being too high). While this improved performance, the learner still did not quite capture walking behavior, instead converging on a relatively stable but slow sequence of actions that loosely resembled skipping.</p>
+    <iframe class="youtube-embed" src="http://www.youtube.com/embed/CwXmYhZDAPE" frameborder="0" allowfullscreen></iframe>
+
+    <p class="content">Fearing that my 6 original features were insufficient to distinguish walking from non-walking states, I reengineered my features in a way that I thought would allow the learner to better capture walking behavior. While my old features were all focused on capturing hip- and knee-joint angles, this new set of features extends to capture other details about the ragdoll, such as torso angle and head height. While this strategy didn't yield a better result on its own, it would prove critical to later efforts. At this point, I put QWOP on the shelf as I dedicated the remainder of my time to working on my research project at ICSI.</p>
+    <iframe class="youtube-embed" src="http://www.youtube.com/embed/AWJ_C5loliU" frameborder="0" allowfullscreen></iframe>
+
+    <p class="content">As it turns out, the hours spent debugging and testing my version of QWOP made me quite proficient at walking &mdash; at least, good enough to reach 20 meters or so before falling. Instead of trying to learn walking behavior from no data, I decided to bootstrap my AI with data taken from my own attempts at walking before letting it learn on its own. By doing this, the AI would begin with some vague notion of walking and improve with time. After learning for around 10 hours by itself, the AI finally took multiple steps and was able to travel up to 20 meters in some cases. Unfortunately, the AI was still very far from perfect. While learned state-action mappings were accurate for the most part, the AI often stumbled across states that it had never seen before, but were similar to other states it already knew about in the Q-table. Thus, the AI needed a way of extrapolating its learned states to unlearned or otherwise unfamiliar states.</p>
+    <iframe class="youtube-embed" src="http://www.youtube.com/embed/Bz45tpIq3BU" frameborder="0" allowfullscreen></iframe>
+
+    <p class="content">I achieved the most success in predicting actions from unknown states by using a neural network with 1 hidden layer. This neural network takes 16 inputs representing the state, and outputs 4 numbers, each bounded between 0 and 1, indicating whether or not each key (Q, W, O and P) should be pressed. I incorporated this neural network as a fallback to the primary Q-learning algorithm. In most cases, the ragdoll's states can be found in the lookup table generated by the Q-learning algorithm, so the neural network is not needed. However, the ragdoll encounters a state every so often that isn't contained in the lookup table. Instead of trying a random action as I'd previously done, I use the neural network to predict an appropriate action given the state.</p>
+    <iframe class="youtube-embed" src="http://www.youtube.com/embed/9DCMMOEolN0" frameborder="0" allowfullscreen></iframe>
